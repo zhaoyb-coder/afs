@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.doe.afs.mapper.house.HouseMapper">
+
+	<resultMap type="House" id="h">
+		<id column="uid" property="uid" />
+		<result column="house_name" property="houseName" />
+		<result column="house_num" property="houseNum" />
+		<result column="house_stat" property="houseStat" />
+		<result column="create_time" property="createTime" />
+		<result column="update_time" property="updateTime" />
+		<result column="is_pay" property="isPay" />
+		<result column="data_state" property="dataState" />
+	</resultMap>
+	
+	<resultMap type="MonthRent" id="m">
+		<id column="uid" property="uid" />
+		<result column="house_id" property="houseId" />
+		<result column="month" property="month" />
+		<result column="is_pay" property="isPay" />
+		<result column="house_rent" property="houseRent" />
+		<result column="water_rent" property="waterRent" />
+		<result column="electricity" property="electricity" />
+		<result column="network" property="network" />
+		<result column="garbage" property="garbage" />
+		<result column="other" property="other" />
+		<result column="create_time" property="createTime" />
+		<result column="update_time" property="updateTime" />
+		
+	</resultMap>
+
+	<!-- 新增 -->
+	<insert id="insert" parameterType="House">
+		insert into afs_house (uid,house_name,house_num,house_stat,create_time,data_state)
+		values(#{uid},#{houseName},#{houseNum},#{houseStat},#{createTime},#{dataState})
+	</insert>
+	<update id="update" parameterType="House">
+		update afs_house set house_name = #{houseName}
+		 <if test="houseNum != null and houseNum != ''">
+	    	,house_num=#{houseNum}
+	    </if>
+	    <if test="houseStat != null and houseStat != ''">
+	    	,house_stat=#{houseStat}
+	    </if>
+	    <if test="updateTime != null">
+	    	,update_time=#{updateTime}
+	    </if>
+	    <if test="isPay != null and isPay != ''">
+	    	,is_pay=#{isPay}
+	    </if>
+		 where uid = #{uid}
+	</update>
+	<update id="delete" parameterType="map">
+		update afs_house set data_state = '0' where uid = #{uid}
+	</update>
+	
+    <!-- 查询公寓房屋列表 -->
+    <select id="queryList" resultMap="h">
+     	SELECT
+		  CASE c2.is_pay
+		  WHEN '' THEN '否'
+		  WHEN '是' THEN '是'
+		  ELSE '否'
+		  END is_pay,
+		  c1.*
+		FROM
+		  afs_house c1
+		  LEFT JOIN afs_month_rent c2
+		    ON c1.uid = c2.house_id
+		    AND c2.month = DATE_FORMAT(NOW(),'%Y%m')
+	    where c1.house_name is not null
+	    and c1.data_state = '1'
+	    <if test="houseName != null and houseName != ''">
+	    	and c1.house_name like #{houseName}
+	    </if>
+    </select>
+    
+    <!-- 查询月租信息 -->
+    <select id="queryMonthRent" resultMap="m">
+     	SELECT * FROM afs_month_rent WHERE house_id = #{houseId} ORDER BY MONTH DESC
+    </select>
+
+</mapper>
